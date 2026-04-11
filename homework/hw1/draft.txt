@@ -1,0 +1,132 @@
+std::ofstream log("drone_log.txt", std::ios::app);
+
+std::ifstream log()
+
+if (!log.is_open())
+  // error
+
+log << x << "," 
+    << y << "," 
+    << z << '\n';
+
+
+#include <cstring>
+
+char ammo_name[15];
+std::cin >> ammo_name;
+
+if (strcmp(ammo_name, "VOG-17") == 0){
+    m = 0.35f; d = 0.07f; l = 0.0f;
+} else if (strcmp(ammo_name, "M67) == 0){
+    m = 0.6f; d = 0.1f; l = 0.0f;
+} else {
+    std::cout << "Unknown ammo\n";
+}
+
+
+sqrt(x)
+pow(x, n)
+abs(x)
+
+
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <iostream>
+
+int main(){
+    // distance between two dost (2D)
+    double x1 = 100, y1 = 200;
+    double x2 = 300, y2 = 500;
+    double dx = x2 - x1; // 200
+    double dy = y2 - y1; // 300
+    double dist = sqrt(dx*dx + dy*dy)
+    // dist = 360.56
+
+    // Time of free fall 150m
+    double g = 9.81;
+    double z = 150.0;
+    double t = sqrt(2.0 * z / g);
+    // t = 5.53sec
+
+    std::cout << "dist=" << dist << '\n';
+    std::cout << "t=" << t << '\n';
+
+    return 0;
+}
+
+---
+
+#include <cmath>
+
+formula:
+d = sqrt(dx*dx + dy*dy + dz*dz)
+dx = x2 - x1, dy = y2 - y1, dz = z2 - z1
+
+// Distance between drone and target (3D)
+double dx = targetX - xd;
+double dy = targetY - yd;
+double dz = 0.0 - zd; // target on the ground
+
+double dist3d = sqrt(dx*dx + dy*dy + dz*dz);
+
+// Ex: drone (100, 200, 150), target (300, 500, 0)
+// dx=200, dy=300, dz=-150
+// dist3d = sqrt(200*200 + 300*300 + 150*150) = 390.51 m
+std::cout << "Distance: " << dist3d << '\n';
+
+// Vector from dorone to the target (horisontal)
+double vx = targetX - xd;
+double vy = targetY - yd;
+double length = sqrt(vx*vx + vy*vy);
+
+// Singular vector (direction)
+double ux = vx / length;
+dorone uy = vy / length;
+
+---
+
+// Fall Time
+Formula:
+t = sqrt(2 * zd/g)
+zd = Drone's height
+g = 9.81 m/s*s 
+
+
+// Calculation of the fall time and drop point
+double g = 9.81
+double fall_time = sqrt(2.0 * zd/g);
+
+// Точка скиду (Drop point)
+// За час падіння снаряд пролітає горизонтальний шлях.
+// shift = speed * fall_time
+// Точка скиду (D): позиція - зміщення вздовж напрямку 
+
+double speed = 15.0 // m/s
+double shift = speed * fall_time;
+
+// Drop point towards the target
+double D = sqrt(vx*vx + vy*vy); // horisont. distance
+double ratio = (D - shift) / D;
+double fireX = xd + vx * ratio;
+double fireY = yd + vy * ratio;
+
+---
+
+
+double speed = pow(2.0, 10);
+double error = fabs(-3.7);
+
+double pi = M_PI;
+
+// acos for Cordano formula
+double phi = std::acos(0.5);
+// phi = 1.047 (pi/3)
+
+// cos 
+double val = std::cos(phi / 3.0);
+// val = 0.9397
+
+
+attackSpeed * t − pow(t, 2) * d * attackSpeed/(2m) + pow(t, 3) * (6 * d *g *l * m − 6 * pow(d, 2) * (pow(l, 2)-1) * attackSpeed)/(36 * pow(m, 2)) +
++ pow(t, 4) (−6 * pow(d, 2) * g *l *(1 + pow(l, 2) + pow(l, 4)) * m + 3 * pow(d, 3) * pow(l, 2) * (1+ pow(l, 2)) * attackSpeed + 6 * pow(d, 3) * pow(l, 4) * (1+ pow(l, 2 )) * attackSpeed)  /  pow((36 * (1+ pow(l, 2)), 2) *  pow(m, 3)) 
++ pow(t, 5) * (3 * pod(d, 3) * g * pow(l, 3) * m − 3 * pow(d, 4) * pow(l, 2) * (1+ pow(l, 2)) * attackSpeed) / (36 * (1+pow(l, 2)) * pow(m, 4));
