@@ -85,7 +85,7 @@ int main()
     // We will use Cardano formula to solve the cubic equation for the time of flight considering drag and lift
     float a = d * g * m - 2 * pow(d, 2) * l * attackSpeed;
     float b = -3 * g * pow(m, 2) + 3 * d * l * m * attackSpeed;
-    float c = 6 * pow(m, 2) * attackSpeed;
+    float c = 6 * pow(m, 2) * zd;
 
     float p = -1 * pow(b, 2) / (3 * pow(a, 2));
     float q = 2 * pow(b, 3) / (27 * pow(a, 3)) + c / a;
@@ -106,6 +106,14 @@ int main()
     float distance_to_target = sqrt(pow(targetX - xd, 2) + pow(targetY - yd, 2));
     std::cout << "Distance to target: " << distance_to_target << " meters" << std::endl;
 
+    // Output the firing point to output.txt
+    std::ofstream output("output.txt");
+    if (!output.is_open())
+    {
+        std::cerr << "Failed to open output.txt" << std::endl;
+        return 1;
+    }
+
     // Step 2: Necessary maneuvering check
     // If h + accelerationPath < distance_to_target, then the drone needs to maneuver to hit the target.
     float fireX = 0.0f, fireY = 0.0f;
@@ -117,6 +125,7 @@ int main()
 
         std::cout << "The drone needs to maneuver to hit the target." << std::endl;
         std::cout << "New drone coordinates for attack: (" << xd << ", " << yd << ", " << zd << ")" << std::endl;
+        output << xd << " " << yd << " ";
     }
 
     // Step 3: Calculate the firing point
@@ -124,13 +133,6 @@ int main()
     fireX = xd + (targetX - xd) * ratio;
     fireY = yd + (targetY - yd) * ratio;
 
-    // Output the firing point to output.txt
-    std::ofstream output("output.txt");
-    if (!output.is_open())
-    {
-        std::cerr << "Failed to open output.txt" << std::endl;
-        return 1;
-    }
     output << fireX << " " << fireY << std::endl;
     output.close();
 
