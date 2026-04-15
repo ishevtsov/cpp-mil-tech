@@ -83,27 +83,27 @@ int main()
 
     // Coefficients for the quadratic equation of motion with drag and lift
     // We will use Cardano formula to solve the cubic equation for the time of flight considering drag and lift
-    float a = d * g * m - 2 * pow(d, 2) * l * attackSpeed;
-    float b = -3 * g * pow(m, 2) + 3 * d * l * m * attackSpeed;
-    float c = 6 * pow(m, 2) * zd;
+    double a = d * g * m - 2 * pow(d, 2) * l * attackSpeed;
+    double b = -3 * g * pow(m, 2) + 3 * d * l * m * attackSpeed;
+    double c = 6 * pow(m, 2) * zd;
 
-    float p = -1 * pow(b, 2) / (3 * pow(a, 2));
-    float q = 2 * pow(b, 3) / (27 * pow(a, 3)) + c / a;
+    double p = -1 * pow(b, 2) / (3 * pow(a, 2));
+    double q = 2 * pow(b, 3) / (27 * pow(a, 3)) + c / a;
 
-    float phi = std::acos(3 * q / (2 * p) * std::sqrt(-3 / p));
+    double phi = std::acos(3 * q / (2 * p) * std::sqrt(-3 / p));
 
-    float t = 2 * std::sqrt(-p / 3) * std::cos((phi + 4 * M_PI) / 3) - b / (3 * a);
+    double t = 2 * std::sqrt(-p / 3) * std::cos((phi + 4 * M_PI) / 3) - b / (3 * a);
     std::cout << "Flight time: " << t << " seconds" << std::endl;
 
     // Horisontal flight distance
-    float h = attackSpeed * t - pow(t, 2) * d * attackSpeed / (2 * m) + pow(t, 3) * (6 * d * g * l * m - 6 * pow(d, 2) * (pow(l, 2) - 1) * attackSpeed) / (36 * pow(m, 2)) +
-              pow(t, 4) * (-6 * pow(d, 2) * g * l * (1 + pow(l, 2) + pow(l, 4)) * m + 3 * pow(d, 3) * pow(l, 2) * (1 + pow(l, 2)) * attackSpeed + 6 * pow(d, 3) * pow(l, 4) * (1 + pow(l, 2)) * attackSpeed) / (pow((36 * (1 + pow(l, 2))), 2) * pow(m, 3)) + pow(t, 5) * (3 * pow(d, 3) * g * pow(l, 3) * m - 3 * pow(d, 4) * pow(l, 2) * (1 + pow(l, 2)) * attackSpeed) / (36 * (1 + pow(l, 2)) * pow(m, 4));
+    double h = attackSpeed * t - pow(t, 2) * d * attackSpeed / (2 * m) + pow(t, 3) * (6 * d * g * l * m - 6 * pow(d, 2) * (pow(l, 2) - 1) * attackSpeed) / (36 * pow(m, 2)) +
+               pow(t, 4) * (-6 * pow(d, 2) * g * l * (1 + pow(l, 2) + pow(l, 4)) * m + 3 * pow(d, 3) * pow(l, 2) * (1 + pow(l, 2)) * attackSpeed + 6 * pow(d, 3) * pow(l, 4) * (1 + pow(l, 2)) * attackSpeed) / (pow((36 * (1 + pow(l, 2))), 2) * pow(m, 3)) + pow(t, 5) * (3 * pow(d, 3) * g * pow(l, 3) * m - 3 * pow(d, 4) * pow(l, 2) * (1 + pow(l, 2)) * attackSpeed) / (36 * (1 + pow(l, 2)) * pow(m, 4));
 
     std::cout << "Horizontal flight distance: " << h << " meters" << std::endl;
 
     // Drop point calculation
     // Step 1: Distance to the target
-    float distance_to_target = sqrt(pow(targetX - xd, 2) + pow(targetY - yd, 2));
+    double distance_to_target = sqrt(pow(targetX - xd, 2) + pow(targetY - yd, 2));
     std::cout << "Distance to target: " << distance_to_target << " meters" << std::endl;
 
     // Output the firing point to output.txt
@@ -116,9 +116,9 @@ int main()
 
     // Step 2: Necessary maneuvering check
     // If h + accelerationPath < distance_to_target, then the drone needs to maneuver to hit the target.
-    float fireX = 0.0f, fireY = 0.0f;
+    double fireX = 0.0, fireY = 0.0;
 
-    if ((h + accelerationPath) < distance_to_target)
+    if ((h + accelerationPath) > distance_to_target)
     {
         xd = targetX - (targetX - xd) * (h + accelerationPath) / distance_to_target;
         yd = targetY - (targetY - yd) * (h + accelerationPath) / distance_to_target;
@@ -129,7 +129,7 @@ int main()
     }
 
     // Step 3: Calculate the firing point
-    float ratio = (distance_to_target - h) / distance_to_target;
+    double ratio = (distance_to_target - h) / distance_to_target;
     fireX = xd + (targetX - xd) * ratio;
     fireY = yd + (targetY - yd) * ratio;
 
