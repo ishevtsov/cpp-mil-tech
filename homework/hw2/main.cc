@@ -29,13 +29,6 @@ enum DroneState
 constexpr float g = 9.81f;
 constexpr int MAX_STEPS = 10000;
 
-// Out data
-float outX[MAX_STEPS + 1];
-float outY[MAX_STEPS + 1];
-float outDir[MAX_STEPS + 1];
-int outState[MAX_STEPS + 1];
-int outTarget[MAX_STEPS + 1];
-
 void readInput(float &xd, float &yd, float &zd, float &initialDir, float &attackSpeed, float &accelerationPath, char ammo_name[], float &arrayTimeStep, float &simTimeStep, float &hitRadius, float &angularSpeed, float &turnThreshold)
 {
     std::ifstream input(in_file);
@@ -103,6 +96,13 @@ double getT(float m, float d, float l, float attackSpeed, float zd)
 
     double t = 2 * std::sqrt(-p / 3) * std::cos((phi + 4 * M_PI) / 3) - b / (3 * a);
     return t;
+}
+
+double getH(double t, float attackSpeed, float d, float m, float l)
+{
+    double h = attackSpeed * t - pow(t, 2) * d * attackSpeed / (2 * m) + pow(t, 3) * (6 * d * g * l * m - 6 * pow(d, 2) * (pow(l, 2) - 1) * attackSpeed) / (36 * pow(m, 2)) +
+               pow(t, 4) * (-6 * pow(d, 2) * g * l * (1 + pow(l, 2) + pow(l, 4)) * m + 3 * pow(d, 3) * pow(l, 2) * (1 + pow(l, 2)) * attackSpeed + 6 * pow(d, 3) * pow(l, 4) * (1 + pow(l, 2)) * attackSpeed) / (pow((36 * (1 + pow(l, 2))), 2) * pow(m, 3)) + pow(t, 5) * (3 * pow(d, 3) * g * pow(l, 3) * m - 3 * pow(d, 4) * pow(l, 2) * (1 + pow(l, 2)) * attackSpeed) / (36 * (1 + pow(l, 2)) * pow(m, 4));
+    return h;
 }
 
 void interpolateTarget(int targetIdx, float t, float arrayTimeStep, float &outTx, float &outTy, float targetXInTime[5][60], float targetYInTime[5][60])
@@ -182,18 +182,50 @@ int main()
     double t{getT(m, d, l, attackSpeed, zd)};
     std::cout << "Flight time: " << t << " seconds" << std::endl;
 
+    // Horisontal flight distance
+    double h{getH(t, attackSpeed, d, m, l)};
+    std::cout << "Horizontal flight distance: " << h << " meters" << std::endl;
+
+    // Out data
+    float outX[MAX_STEPS + 1];    // xd
+    float outY[MAX_STEPS + 1];    // yd
+    float outDir[MAX_STEPS + 1];  //
+    int outState[MAX_STEPS + 1];  // Dron State
+    int outTarget[MAX_STEPS + 1]; // Target index
+
     // The main loop runs until the drone reaches the drop point or the number of steps exceeds MAX_STEPS.
+    int step = 0;
+    float currentTime = 0.0f;
+
     while (true)
     {
-        int step = 0;
+        // Interpolate the positions of all 5 targets.
+        float outTx = 0.0f, outTy = 0.0f;
         float totalTime = 0.0f;
 
-        // Interpolate the positions of all 5 targets.
+        for (int i = 0; i < TARGET_COUNT; i++)
+        {
 
-        /* code */
+            interpolateTarget(i, currentTime, arrayTimeStep, outTx, outTy, targetXInTime, targetYInTime);
+
+            // lead targeting
+
+            // drop point
+
+            // totalTime (Dron to Target flight)
+
+            step++;
+            currentTime += simTimeStep;
+            totalTime += simTimeStep;
+        }
+
+        if (step > MAX_STEPS)
+        {
+            break;
+        }
+
+        //
     }
-
-    //
 
     return 0;
 }
