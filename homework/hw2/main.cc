@@ -11,10 +11,33 @@ constexpr char out_file[] = "simulation.txt";
 // Ammunition types and their properties
 constexpr int AMMO_COUNT = 5;
 constexpr int TARGET_COUNT = 5;
+constexpr int TARGET_STEPS = 60;
 constexpr char bombNames[AMMO_COUNT][15] = {"VOG-17", "M67", "RKG-3", "GLIDING-VOG", "GLIDING-RKG"};
 constexpr float bombM[] = {0.35f, 0.6f, 1.2f, 0.45f, 1.4f};    // mass of the ammunition (kg)
 constexpr float bombD[] = {0.07f, 0.10f, 0.10f, 0.10f, 0.10f}; // drag coefficient earodynamic resistance
 constexpr float bombL[] = {0.0f, 0.0f, 0.0f, 1.0f, 1.0f};      // lift coefficient (0 = free fall, 1 = loitering ammunition)
+
+// Input parameters
+// Drone coordinates (zd - height, m)
+float xd = 0.0f, yd = 0.0f, zd = 0.0f;
+// Initial drone direction
+float initialDir = 0.0f;
+// Drone attack speed (m/s)
+float attackSpeed = 0.0f;
+// Drone acceleration distance before attack (m)
+float accelerationPath = 0.0f;
+// Ammunition name
+char ammo_name[] = "Unknown";
+// Time step for Target coordinates array (sec)
+float arrayTimeStep = 0.0f;
+// Time step for Simulation (sec)
+float simTimeStep = 0.0f;
+// Kill zone radius - allowed hit error (m)
+float hitRadius = 0.0f;
+// Angular spped of rotation (rad/sec)
+float angularSpeed = 0.0f;
+// Threshold angle for stopping
+float turnThreshold = 0.0f;
 
 // Drone states
 enum DroneState
@@ -42,7 +65,7 @@ void readInput(float &xd, float &yd, float &zd, float &initialDir, float &attack
     input.close();
 }
 
-void readTargets(float targetXInTime[5][60], float targetYInTime[5][60])
+void readTargets(float targetXInTime[TARGET_COUNT][TARGET_STEPS], float targetYInTime[TARGET_COUNT][TARGET_STEPS])
 {
     std::ifstream targetFile(targets_file);
     if (!targetFile.is_open())
@@ -52,14 +75,14 @@ void readTargets(float targetXInTime[5][60], float targetYInTime[5][60])
     }
     for (int i = 0; i < TARGET_COUNT; i++)
     {
-        for (int j = 0; j < 60; j++)
+        for (int j = 0; j < TARGET_STEPS; j++)
         {
             targetFile >> targetXInTime[i][j];
         }
     }
     for (int i = 0; i < TARGET_COUNT; i++)
     {
-        for (int j = 0; j < 60; j++)
+        for (int j = 0; j < TARGET_STEPS; j++)
         {
             targetFile >> targetYInTime[i][j];
         }
@@ -105,39 +128,65 @@ double getH(double t, float attackSpeed, float d, float m, float l)
     return h;
 }
 
-void interpolateTarget(int targetIdx, float t, float arrayTimeStep, float &outTx, float &outTy, float targetXInTime[5][60], float targetYInTime[5][60])
+void interpolateTarget(int targetIdx, float t, float arrayTimeStep, float &outTx, float &outTy, float targetXInTime[TARGET_COUNT][TARGET_STEPS], float targetYInTime[TARGET_COUNT][TARGET_STEPS])
 {
-    int idx = static_cast<int>(floor(t / arrayTimeStep) / arrayTimeStep) % 60;
-    int next = (idx + 1) % 60;
+    int idx = static_cast<int>(floor(t / arrayTimeStep) / arrayTimeStep) % TARGET_STEPS;
+    int next = (idx + 1) % TARGET_STEPS;
     float frac = (t - idx * arrayTimeStep) / arrayTimeStep;
     outTx = targetXInTime[targetIdx][idx] + (targetXInTime[targetIdx][next] - targetXInTime[targetIdx][idx]) * frac;
     outTy = targetYInTime[targetIdx][idx] + (targetYInTime[targetIdx][next] - targetYInTime[targetIdx][idx]) * frac;
 }
+float getDronPosition(float targetP, float simTimeStep, float t)
+{
+    float dp = targetP * (t + simTimeStep) - targetP * (t);
+
+    return dp;
+}
+
+float getPredictedPosition(float dp, float targetP, float simTimeStep, float t, float totalTime)
+{
+    float targetVp = dp / simTimeStep;
+    float predictedP = targetP * (t) + targetVp * totalTime;
+
+    return predictedP;
+}
+
+double getDistanceToTarget(float xd, float yd, float targetX, float targetY)
+{
+    return sqrt(pow(targetX - xd, 2) + pow(targetY - yd, 2));
+}
+
+double getRatio(double distance_to_target, double h, float accelerationPath)
+{
+    return (distance_to_target - h) / distance_to_target;
+}
+
+float getTimeToStop(DroneState phase, float acceleration)
+{
+    switch (phase)
+    {
+    case STOPPED:
+        return 0;
+
+    case ACCELERATING:
+        return 0;
+
+    case DECELERATING:
+        return 0;
+
+    case TURNING:
+        return 0;
+
+    case MOVING:
+        return attackSpeed / acceleration;
+
+    default:
+        return 0;
+    }
+}
 
 int main()
 {
-    // Input parameters
-    // Drone coordinates (zd - height, m)
-    float xd = 0.0f, yd = 0.0f, zd = 0.0f;
-    // Initial drone direction
-    float initialDir = 0.0f;
-    // Drone attack speed (m/s)
-    float attackSpeed = 0.0f;
-    // Drone acceleration distance before attack (m)
-    float accelerationPath = 0.0f;
-    // Ammunition name
-    char ammo_name[]{};
-    // Time step for Target coordinates array (sec)
-    float arrayTimeStep = 0.0f;
-    // Time step for Simulation (sec)
-    float simTimeStep = 0.0f;
-    // Kill zone radius - allowed hit error (m)
-    float hitRadius = 0.0f;
-    // Angular spped of rotation (rad/sec)
-    float angularSpeed = 0.0f;
-    // Threshold angle for stopping
-    float turnThreshold = 0.0f;
-
     // Read input parameters from file
     readInput(xd, yd, zd, initialDir, attackSpeed, accelerationPath, ammo_name, arrayTimeStep, simTimeStep, hitRadius, angularSpeed, turnThreshold);
 
@@ -170,10 +219,13 @@ int main()
     std::cout << "Lift coefficient: " << l << std::endl;
     std::cout << "--------------------------------------------" << std::endl;
 
+    // Drone state
+    DroneState phase = STOPPED;
+
     // Read target coordinates from file
     // Target coordinates
-    float targetXInTime[5][60];
-    float targetYInTime[5][60];
+    float targetXInTime[TARGET_COUNT][TARGET_STEPS];
+    float targetYInTime[TARGET_COUNT][TARGET_STEPS];
 
     readTargets(targetXInTime, targetYInTime);
 
@@ -185,6 +237,8 @@ int main()
     // Horisontal flight distance
     double h{getH(t, attackSpeed, d, m, l)};
     std::cout << "Horizontal flight distance: " << h << " meters" << std::endl;
+
+    float acceleration = pow(attackSpeed, 2) / (2 * accelerationPath);
 
     // Out data
     float outX[MAX_STEPS + 1];    // xd
@@ -201,30 +255,48 @@ int main()
     {
         // Interpolate the positions of all 5 targets.
         float outTx = 0.0f, outTy = 0.0f;
+        float maxTotalTime[TARGET_COUNT] = {};
         float totalTime = 0.0f;
 
         for (int i = 0; i < TARGET_COUNT; i++)
         {
+            phase = MOVING;
 
-            interpolateTarget(i, currentTime, arrayTimeStep, outTx, outTy, targetXInTime, targetYInTime);
+            interpolateTarget(i, totalTime, arrayTimeStep, outTx, outTy, targetXInTime, targetYInTime);
 
-            // lead targeting
+            // Dron Position
+            outX[step] = getDronPosition(xd, simTimeStep, currentTime);
+            outY[step] = getDronPosition(yd, simTimeStep, currentTime);
 
-            // drop point
+            // Lead targeting
+            float predictedX = getPredictedPosition(outX[step], outTx, simTimeStep, currentTime, totalTime);
+            float predictedY = getPredictedPosition(outY[step], outTy, simTimeStep, currentTime, totalTime);
+
+            // Drop point calculation
+            // Step 1: Distance to the target
+            double distance_to_target{getDistanceToTarget(xd, yd, predictedX, predictedY)};
+
+            // Step 2: Calculate the firing point
+            double ratio{getRatio(distance_to_target, h, accelerationPath)};
+            double fireX = xd + (predictedX - xd) * ratio;
+            double fireY = yd + (predictedY - yd) * ratio;
 
             // totalTime (Dron to Target flight)
+            float timeToStop = getTimeToStop(phase, acceleration);
+            totalTime += timeToStop;
 
-            step++;
             currentTime += simTimeStep;
             totalTime += simTimeStep;
+            totalTime += currentTime;
+            std::cout << "Total time: " << totalTime << std::endl;
+            std::cout << "Time to stop: " << timeToStop << std::endl;
+            step++;
         }
 
         if (step > MAX_STEPS)
         {
             break;
         }
-
-        //
     }
 
     return 0;
