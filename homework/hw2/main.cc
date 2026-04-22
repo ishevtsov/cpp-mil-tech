@@ -128,27 +128,28 @@ double getH(double t, float attackSpeed, float d, float m, float l)
     return h;
 }
 
-void interpolateTarget(int targetIdx, float t, float arrayTimeStep, float &outTx, float &outTy, float targetXInTime[TARGET_COUNT][TARGET_STEPS], float targetYInTime[TARGET_COUNT][TARGET_STEPS])
+float getDronPosition(float targetXYZ, float simTimeStep, float t)
 {
-    int idx = static_cast<int>(floor(t / arrayTimeStep) / arrayTimeStep) % TARGET_STEPS;
-    int next = (idx + 1) % TARGET_STEPS;
-    float frac = (t - idx * arrayTimeStep) / arrayTimeStep;
-    outTx = targetXInTime[targetIdx][idx] + (targetXInTime[targetIdx][next] - targetXInTime[targetIdx][idx]) * frac;
-    outTy = targetYInTime[targetIdx][idx] + (targetYInTime[targetIdx][next] - targetYInTime[targetIdx][idx]) * frac;
-}
-float getDronPosition(float targetP, float simTimeStep, float t)
-{
-    float dp = targetP * (t + simTimeStep) - targetP * (t);
+    float dp = targetXYZ * (t + simTimeStep) - targetXYZ * (t);
 
     return dp;
 }
 
-float getPredictedPosition(float dp, float targetP, float simTimeStep, float t, float totalTime)
+float getTargetSpeed(float targetXYZ, float arrayTimeStep, double t)
 {
-    float targetVp = dp / simTimeStep;
-    float predictedP = targetP * (t) + targetVp * totalTime;
+    float dxyz = targetXYZ * (t + arrayTimeStep) - targetXYZ * (t);
+    float targetVxyz = dxyz / arrayTimeStep;
 
-    return predictedP;
+    return targetVxyz;
+}
+
+float getPredictedPosition(float targetXYZ, float arrayTimeStep, float t, float totalTime)
+{
+    float targetVxyz = getTargetSpeed(targetXYZ, arrayTimeStep, t);
+
+    float predictedXYZ = targetXYZ * (t) + targetVxyz * totalTime;
+
+    return predictedXYZ;
 }
 
 double getDistanceToTarget(float xd, float yd, float targetX, float targetY)
@@ -156,7 +157,7 @@ double getDistanceToTarget(float xd, float yd, float targetX, float targetY)
     return sqrt(pow(targetX - xd, 2) + pow(targetY - yd, 2));
 }
 
-double getRatio(double distance_to_target, double h, float accelerationPath)
+float getRatio(float distance_to_target, double h)
 {
     return (distance_to_target - h) / distance_to_target;
 }
@@ -241,6 +242,7 @@ int main()
     float acceleration = pow(attackSpeed, 2) / (2 * accelerationPath);
 
     // Out data
+    int step = 0;
     float outX[MAX_STEPS + 1];    // xd
     float outY[MAX_STEPS + 1];    // yd
     float outDir[MAX_STEPS + 1];  //
@@ -248,53 +250,121 @@ int main()
     int outTarget[MAX_STEPS + 1]; // Target index
 
     // The main loop runs until the drone reaches the drop point or the number of steps exceeds MAX_STEPS.
-    int step = 0;
+
     float currentTime = 0.0f;
+
+    std::ofstream output(out_file);
+    if (!output.is_open())
+    {
+        std::cerr << "Failed to open " << out_file << std::endl;
+        return 1;
+    }
 
     while (true)
     {
         // Interpolate the positions of all 5 targets.
-        float outTx = 0.0f, outTy = 0.0f;
-        float maxTotalTime[TARGET_COUNT] = {};
+        float targetX = 0.0f, targetY = 0.0f;
+        float ratio = 0.0f;
+        float fireX = 0.0f, fireY = 0.0f;
+        float distanceToTarget = 0.0f;
+
+        float currentTime = 0.0f;
         float totalTime = 0.0f;
+        float minTotalTime = 100000.0f;
+        int targetIdx = 0;
+        float targetVx = 0.0f;
+        float targetVy = 0.0f;
 
-        for (int i = 0; i < TARGET_COUNT; i++)
+        // For each TARGET_STEPS (60)
+        for (int j = 0; j < TARGET_STEPS; j++)
         {
-            phase = MOVING;
+            // For each Target (5)
+            for (int i = 0; i < TARGET_COUNT; i++)
+            {
+                currentTime += arrayTimeStep;
 
-            interpolateTarget(i, totalTime, arrayTimeStep, outTx, outTy, targetXInTime, targetYInTime);
+                // Get TargetX, TargetY
+                targetX = targetXInTime[i][j];
+                targetY = targetYInTime[i][j];
 
-            // Dron Position
-            outX[step] = getDronPosition(xd, simTimeStep, currentTime);
-            outY[step] = getDronPosition(yd, simTimeStep, currentTime);
+                // Calculate Distance to target
+                distanceToTarget = getDistanceToTarget(xd, yd, targetX, targetY);
 
-            // Lead targeting
-            float predictedX = getPredictedPosition(outX[step], outTx, simTimeStep, currentTime, totalTime);
-            float predictedY = getPredictedPosition(outY[step], outTy, simTimeStep, currentTime, totalTime);
+                // Calculate totalTime (flight time to the drop point)
+                totalTime = distanceToTarget / attackSpeed;
 
-            // Drop point calculation
-            // Step 1: Distance to the target
-            double distance_to_target{getDistanceToTarget(xd, yd, predictedX, predictedY)};
+                // Calculate Target speed
+                float predictedX = getPredictedPosition(targetX, arrayTimeStep, t, totalTime);
+                float predictedY = getPredictedPosition(targetY, arrayTimeStep, t, totalTime);
 
-            // Step 2: Calculate the firing point
-            double ratio{getRatio(distance_to_target, h, accelerationPath)};
-            double fireX = xd + (predictedX - xd) * ratio;
-            double fireY = yd + (predictedY - yd) * ratio;
+                // Calculate the drop point
+                distanceToTarget = getDistanceToTarget(xd, yd, predictedX, predictedY);
+                ratio = getRatio(distanceToTarget, h);
+                float _fireX = xd + (predictedX - xd) * ratio;
+                float _fireY = yd + (predictedY - yd) * ratio;
 
-            // totalTime (Dron to Target flight)
-            float timeToStop = getTimeToStop(phase, acceleration);
-            totalTime += timeToStop;
+                // Have dificulties to calculate angularSpeed, but if I do:
+                if (angularSpeed > turnThreshold)
+                {
+                    phase = TURNING;
+                    angularSpeed = angularSpeed - turnThreshold;
+                }
+                else
+                {
+                    phase = MOVING;
+                }
 
-            currentTime += simTimeStep;
-            totalTime += simTimeStep;
-            totalTime += currentTime;
-            std::cout << "Total time: " << totalTime << std::endl;
-            std::cout << "Time to stop: " << timeToStop << std::endl;
-            step++;
+                // Pick the closest target
+                if (totalTime < minTotalTime)
+                {
+                    minTotalTime = totalTime;
+                    targetIdx = i;
+                    outTarget[step] = targetIdx;
+                    outState[step] = phase;
+                    outDir[step] = angularSpeed;
+
+                    // Update Drop point for the closest target
+                    fireX = _fireX;
+                    fireY = _fireY;
+                }
+
+                step++;
+
+                // Output" Total time: " << maxTotalTime << std::endl;
+            }
+            minTotalTime = 100000.0f;
         }
 
         if (step > MAX_STEPS)
         {
+            // Writing N (steps)
+            output << step << std::endl;
+            // Writing Dron position
+            for (int i = 0; i < step; i++)
+            {
+                output << outX[i] << " " << outY[i] << " ";
+            }
+            output << std::endl;
+            // Writing Direction data
+            for (int i = 0; i < step; i++)
+            {
+                output << outDir[i] << " " << " ";
+            }
+            output << std::endl;
+            // Writing Dron State
+            for (int i = 0; i < step; i++)
+            {
+                output << outState[i] << " " << " ";
+            }
+            output << std::endl;
+            // Writing Target index
+            for (int i = 0; i < step; i++)
+            {
+                output << outTarget[i] << " " << " ";
+            }
+            output << std::endl;
+
+            output.close();
             break;
         }
     }
