@@ -17,10 +17,6 @@ constexpr int MAX_STEPS = 10000;
 // Ammunition types and their properties
 constexpr int TARGET_COUNT = 5;
 constexpr int TARGET_STEPS = 60;
-// constexpr char bombNames[AMMO_COUNT][15] = {"VOG-17", "M67", "RKG-3", "GLIDING-VOG", "GLIDING-RKG"};
-// constexpr float bombM[] = {0.35f, 0.6f, 1.2f, 0.45f, 1.4f};    // mass of the ammunition (kg)
-// constexpr float bombD[] = {0.07f, 0.10f, 0.10f, 0.10f, 0.10f}; // drag coefficient earodynamic resistance
-// constexpr float bombL[] = {0.0f, 0.0f, 0.0f, 1.0f, 1.0f};      // lift coefficient (0 = free fall, 1 = loitering ammunition)
 
 // Drone states
 enum DroneState
