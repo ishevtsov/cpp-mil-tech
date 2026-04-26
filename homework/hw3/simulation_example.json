@@ -1,0 +1,215 @@
+{
+  "totalSteps": 10,
+  "steps": [
+    {
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "direction": 0.785,
+      "state": 3,
+      "targetIndex": 0,
+      "dropPoint": {
+        "x": 285.3,
+        "y": 192.1
+      },
+      "aimPoint": {
+        "x": 6.41,
+        "y": 6.41
+      },
+      "predictedTarget": {
+        "x": 301.2,
+        "y": 200.8
+      }
+    },
+    {
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "direction": 0.835,
+      "state": 3,
+      "targetIndex": 0,
+      "dropPoint": {
+        "x": 285.1,
+        "y": 193
+      },
+      "aimPoint": {
+        "x": 6.03,
+        "y": 6.71
+      },
+      "predictedTarget": {
+        "x": 301.5,
+        "y": 201.1
+      }
+    },
+    {
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "direction": 0.885,
+      "state": 3,
+      "targetIndex": 0,
+      "dropPoint": {
+        "x": 284.8,
+        "y": 193.9
+      },
+      "aimPoint": {
+        "x": 5.64,
+        "y": 7
+      },
+      "predictedTarget": {
+        "x": 301.8,
+        "y": 201.4
+      }
+    },
+    {
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "direction": 0.588,
+      "state": 1,
+      "targetIndex": 0,
+      "dropPoint": {
+        "x": 285.6,
+        "y": 191.2
+      },
+      "aimPoint": {
+        "x": 7.55,
+        "y": 5.03
+      },
+      "predictedTarget": {
+        "x": 302.1,
+        "y": 201.7
+      }
+    },
+    {
+      "position": {
+        "x": 1.17,
+        "y": 0.78
+      },
+      "direction": 0.588,
+      "state": 1,
+      "targetIndex": 0,
+      "dropPoint": {
+        "x": 285.5,
+        "y": 191.3
+      },
+      "aimPoint": {
+        "x": 8.72,
+        "y": 5.81
+      },
+      "predictedTarget": {
+        "x": 302.4,
+        "y": 201.9
+      }
+    },
+    {
+      "position": {
+        "x": 3.51,
+        "y": 2.34
+      },
+      "direction": 0.588,
+      "state": 1,
+      "targetIndex": 0,
+      "dropPoint": {
+        "x": 285.3,
+        "y": 191.5
+      },
+      "aimPoint": {
+        "x": 11.06,
+        "y": 7.37
+      },
+      "predictedTarget": {
+        "x": 302.7,
+        "y": 202.2
+      }
+    },
+    {
+      "position": {
+        "x": 7.02,
+        "y": 4.68
+      },
+      "direction": 0.588,
+      "state": 1,
+      "targetIndex": 0,
+      "dropPoint": {
+        "x": 285,
+        "y": 191.8
+      },
+      "aimPoint": {
+        "x": 14.57,
+        "y": 9.71
+      },
+      "predictedTarget": {
+        "x": 303,
+        "y": 202.5
+      }
+    },
+    {
+      "position": {
+        "x": 11.7,
+        "y": 7.8
+      },
+      "direction": 0.587,
+      "state": 1,
+      "targetIndex": 0,
+      "dropPoint": {
+        "x": 284.8,
+        "y": 192
+      },
+      "aimPoint": {
+        "x": 19.25,
+        "y": 12.82
+      },
+      "predictedTarget": {
+        "x": 303.3,
+        "y": 202.8
+      }
+    },
+    {
+      "position": {
+        "x": 17.55,
+        "y": 11.7
+      },
+      "direction": 0.587,
+      "state": 4,
+      "targetIndex": 0,
+      "dropPoint": {
+        "x": 284.5,
+        "y": 192.3
+      },
+      "aimPoint": {
+        "x": 25.1,
+        "y": 16.72
+      },
+      "predictedTarget": {
+        "x": 303.6,
+        "y": 203.1
+      }
+    },
+    {
+      "position": {
+        "x": 19.05,
+        "y": 12.7
+      },
+      "direction": 0.586,
+      "state": 4,
+      "targetIndex": 0,
+      "dropPoint": {
+        "x": 284.4,
+        "y": 192.4
+      },
+      "aimPoint": {
+        "x": 26.6,
+        "y": 17.72
+      },
+      "predictedTarget": {
+        "x": 303.9,
+        "y": 203.4
+      }
+    }
+  ]
+}
