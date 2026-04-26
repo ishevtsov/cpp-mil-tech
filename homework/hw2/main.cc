@@ -52,7 +52,7 @@ enum DroneState
 constexpr float g = 9.81f;
 constexpr int MAX_STEPS = 10000;
 
-void readInput(float &xd, float &yd, float &zd, float &initialDir, float &attackSpeed, float &accelerationPath, char ammo_name[], float &arrayTimeStep, float &simTimeStep, float &hitRadius, float &angularSpeed, float &turnThreshold)
+void readIn(float &xd, float &yd, float &zd, float &initialDir, float &attackSpeed, float &accelerationPath, char ammo_name[], float &arrayTimeStep, float &simTimeStep, float &hitRadius, float &angularSpeed, float &turnThreshold)
 {
     std::ifstream input(in_file);
     if (!input.is_open())
@@ -63,6 +63,25 @@ void readInput(float &xd, float &yd, float &zd, float &initialDir, float &attack
 
     input >> xd >> yd >> zd >> initialDir >> attackSpeed >> accelerationPath >> ammo_name >> arrayTimeStep >> simTimeStep >> hitRadius >> angularSpeed >> turnThreshold;
     input.close();
+}
+// Writing Float Array data to the file
+void writeArrOut(float data[MAX_STEPS + 1], int step, std::ofstream &output)
+{
+    for (int i = 0; i < step; i++)
+    {
+        output << data[i] << " ";
+    }
+    output << std::endl;
+}
+
+// Writing Int Array data to the file
+void writeIntOut(int data[MAX_STEPS + 1], int step, std::ofstream &output)
+{
+    for (int i = 0; i < step; i++)
+    {
+        output << data[i] << " ";
+    }
+    output << std::endl;
 }
 
 void readTargets(float targetXInTime[TARGET_COUNT][TARGET_STEPS], float targetYInTime[TARGET_COUNT][TARGET_STEPS])
@@ -189,7 +208,7 @@ float getTimeToStop(DroneState phase, float acceleration)
 int main()
 {
     // Read input parameters from file
-    readInput(xd, yd, zd, initialDir, attackSpeed, accelerationPath, ammo_name, arrayTimeStep, simTimeStep, hitRadius, angularSpeed, turnThreshold);
+    readIn(xd, yd, zd, initialDir, attackSpeed, accelerationPath, ammo_name, arrayTimeStep, simTimeStep, hitRadius, angularSpeed, turnThreshold);
 
     std::cout << "Input Data:" << std::endl;
     std::cout << "Drone coordinates: (" << xd << ", " << yd << ", " << zd << ")" << std::endl;
@@ -340,29 +359,20 @@ int main()
             // Writing N (steps)
             output << step << std::endl;
             // Writing Dron position
-            for (int i = 0; i < step; i++)
+            float outXY[MAX_STEPS * 2 + 1];
+            int index = 0;
+            for (int i = 0; i < MAX_STEPS; ++i)
             {
-                output << outX[i] << " " << outY[i] << " ";
+                outXY[index++] = outX[i];
+                outXY[index++] = outY[i];
             }
-            output << std::endl;
+            writeArrOut(outXY, step, output);
             // Writing Direction data
-            for (int i = 0; i < step; i++)
-            {
-                output << outDir[i] << " " << " ";
-            }
-            output << std::endl;
+            writeArrOut(outDir, step, output);
             // Writing Dron State
-            for (int i = 0; i < step; i++)
-            {
-                output << outState[i] << " " << " ";
-            }
-            output << std::endl;
+            writeIntOut(outState, step, output);
             // Writing Target index
-            for (int i = 0; i < step; i++)
-            {
-                output << outTarget[i] << " " << " ";
-            }
-            output << std::endl;
+            writeIntOut(outTarget, step, output);
 
             output.close();
             break;
