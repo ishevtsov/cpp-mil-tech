@@ -9,7 +9,7 @@ using json = nlohmann::json;
 constexpr char conf_file[] = "config.json";
 constexpr char ammo_file[] = "ammo.json";
 constexpr char targets_file[] = "targets.json";
-constexpr char out_file[] = "simulation.txt";
+constexpr char out_file[] = "simulation.json";
 
 constexpr float g = 9.81f;
 constexpr int MAX_STEPS = 10000;
@@ -141,26 +141,6 @@ void readTargets(float targetXInTime[TARGET_COUNT][TARGET_STEPS], float targetYI
     for (int i = 0; i < tgtCount; i++)
         delete[] targets[i];
     delete[] targets;
-}
-
-// Writing Float Array data to the file
-void writeArrOut(float data[MAX_STEPS + 1], int step, std::ofstream &output)
-{
-    for (int i = 0; i < step; i++)
-    {
-        output << data[i] << " ";
-    }
-    output << std::endl;
-}
-
-// Writing Int Array data to the file
-void writeIntOut(int data[MAX_STEPS + 1], int step, std::ofstream &output)
-{
-    for (int i = 0; i < step; i++)
-    {
-        output << data[i] << " ";
-    }
-    output << std::endl;
 }
 
 double getT(float m, float d, float l, float attackSpeed, float zd)
@@ -312,13 +292,6 @@ int main()
 
     float currentTime = 0.0f;
 
-    std::ofstream output(out_file);
-    if (!output.is_open())
-    {
-        std::cerr << "Failed to open " << out_file << std::endl;
-        return 1;
-    }
-
     while (true)
     {
         // Interpolate the positions of all 5 targets.
@@ -396,25 +369,36 @@ int main()
 
         if (step > MAX_STEPS)
         {
-            // Writing N (steps)
-            output << step << std::endl;
-            // Writing Dron position
-            float outXY[MAX_STEPS * 2 + 1];
-            int index = 0;
-            for (int i = 0; i < MAX_STEPS; ++i)
+            std::ofstream fout(out_file);
+            if (!fout.is_open())
             {
-                outXY[index++] = outX[i];
-                outXY[index++] = outY[i];
+                std::cerr << "Failed to open " << out_file << std::endl;
+                return 1;
             }
-            writeArrOut(outXY, step, output);
-            // Writing Direction data
-            writeArrOut(outDir, step, output);
-            // Writing Dron State
-            writeIntOut(outState, step, output);
-            // Writing Target index
-            writeIntOut(outTarget, step, output);
 
-            output.close();
+            json out;
+            // Writing N (steps)
+            out["totalSteps"] = step;
+            // Writing Dron position
+            out["steps"] = json::array();
+            for (int i = 0; i < step; i++)
+            {
+                json step;
+                step["position"] = {{"x", drone.startPos.x}, {"y", drone.startPos.y}};
+                step["direction"] = outDir[i];
+                step["state"] = outState[i];
+                step["targetIndex"] = outTarget[i];
+                // step["dropPoint"] = {{"x", s[i].dropPoint.x},
+                //                      {"y", s[i].dropPoint.y}};
+                // step["aimPoint"] = {{"x", s[i].aimPoint.x},
+                //                     {"y", s[i].aimPoint.y}};
+                // step["predictedTarget"] = {{"x", s[i].predictedTarget.x},
+                //                            {"y", s[i].predictedTarget.y}};
+                out["steps"].push_back(step);
+            }
+
+            fout << out.dump(2);
+            fout.close();
             break;
         }
     }
